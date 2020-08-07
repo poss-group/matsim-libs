@@ -38,6 +38,7 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contrib.drt.optimizer.insertion.DrtInsertionSearchParams;
 import org.matsim.contrib.drt.optimizer.insertion.ExtensiveInsertionSearchParams;
 import org.matsim.contrib.drt.optimizer.insertion.SelectiveInsertionSearchParams;
+import org.matsim.contrib.drt.optimizer.rebalancing.AbstractRebalancingParams;
 import org.matsim.contrib.drt.optimizer.rebalancing.mincostflow.MinCostFlowRebalancingParams;
 import org.matsim.contrib.dvrp.router.DvrpModeRoutingNetworkModule;
 import org.matsim.contrib.dvrp.run.Modal;
@@ -207,6 +208,9 @@ public final class DrtConfigGroup extends ReflectiveConfigGroup implements Modal
 
 	@NotNull
 	private DrtInsertionSearchParams drtInsertionSearchParams;
+
+	@Nullable
+	private AbstractRebalancingParams rebalancingParams;
 
 	@NotNull
 	private String drtSpeedUpMode = "";
@@ -640,14 +644,8 @@ public final class DrtConfigGroup extends ReflectiveConfigGroup implements Modal
 		return drtInsertionSearchParams;
 	}
 
-	public Optional<MinCostFlowRebalancingParams> getMinCostFlowRebalancing() {
-		Collection<? extends ConfigGroup> parameterSets = getParameterSets(MinCostFlowRebalancingParams.SET_NAME);
-		if (parameterSets.size() > 1) {
-			throw new RuntimeException("More then one rebalancing parameter sets is specified");
-		}
-		return parameterSets.isEmpty() ?
-				Optional.empty() :
-				Optional.of((MinCostFlowRebalancingParams)parameterSets.iterator().next());
+	public Optional<AbstractRebalancingParams> getRebalancingParams() {
+		return Optional.ofNullable(rebalancingParams);
 	}
 
 	@Override
@@ -672,6 +670,10 @@ public final class DrtConfigGroup extends ReflectiveConfigGroup implements Modal
 			Preconditions.checkState(drtInsertionSearchParams == null,
 					"Remove the existing drtRequestInsertionParams before adding a new one");
 			drtInsertionSearchParams = (DrtInsertionSearchParams)set;
+		} else if (set instanceof AbstractRebalancingParams) {
+			Preconditions.checkState(rebalancingParams == null,
+					"Remove the existing rebalancingParams before adding a new one");
+			rebalancingParams = (AbstractRebalancingParams)set;
 		}
 
 		super.addParameterSet(set);
@@ -683,6 +685,10 @@ public final class DrtConfigGroup extends ReflectiveConfigGroup implements Modal
 			Preconditions.checkState(drtInsertionSearchParams != null,
 					"The existing drtRequestInsertionParams is null. Cannot remove it.");
 			drtInsertionSearchParams = null;
+		} else if (set instanceof AbstractRebalancingParams) {
+			Preconditions.checkState(rebalancingParams != null,
+					"The existing rebalancingParams is null. Cannot remove it.");
+			rebalancingParams = null;
 		}
 
 		return super.removeParameterSet(set);

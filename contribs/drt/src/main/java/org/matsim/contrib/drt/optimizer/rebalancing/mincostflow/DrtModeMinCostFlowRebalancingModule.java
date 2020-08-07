@@ -61,7 +61,7 @@ public class DrtModeMinCostFlowRebalancingModule extends AbstractDvrpModeModule 
 
 	@Override
 	public void install() {
-		MinCostFlowRebalancingParams params = drtCfg.getMinCostFlowRebalancing().orElseThrow();
+		MinCostFlowRebalancingParams params = (MinCostFlowRebalancingParams)drtCfg.getRebalancingParams().orElseThrow();
 		bindModal(DrtZonalSystem.class).toProvider(modalProvider(getter -> {
 
 			if (params.getRebalancingZonesGeneration()
