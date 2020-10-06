@@ -23,6 +23,7 @@ package org.matsim.contrib.drt.run;
 import java.net.URL;
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -30,6 +31,7 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.contrib.drt.analysis.zonal.DrtModeZonalSystemModule;
 import org.matsim.contrib.drt.fare.DrtFareHandler;
+import org.matsim.contrib.drt.optimizer.insertion.InsertionCostCalculator;
 import org.matsim.contrib.drt.optimizer.rebalancing.Feedforward.DrtModeFeedforwardRebalanceModule;
 import org.matsim.contrib.drt.optimizer.rebalancing.Feedforward.FeedforwardRebalancingStrategyParams;
 import org.matsim.contrib.drt.optimizer.rebalancing.NoRebalancingStrategy;
@@ -80,6 +82,7 @@ import com.google.inject.name.Named;
 public final class DrtModeModule extends AbstractDvrpModeModule {
 
 	private final DrtConfigGroup drtCfg;
+	private final static Logger LOG = Logger.getLogger(DrtModeModule.class.getName());
 
 	public DrtModeModule(DrtConfigGroup drtCfg) {
 		super(drtCfg.getMode());
@@ -88,6 +91,7 @@ public final class DrtModeModule extends AbstractDvrpModeModule {
 
 	@Override
 	public void install() {
+		LOG.info("Info installing drt with additional constraints");
 		DvrpModes.registerDvrpMode(binder(), getMode());
 		install(new DvrpModeRoutingNetworkModule(getMode(), drtCfg.isUseModeFilteredSubnetwork()));
 		bindModal(TravelDisutilityFactory.class).toInstance(TimeAsTravelDisutility::new);
@@ -118,8 +122,10 @@ public final class DrtModeModule extends AbstractDvrpModeModule {
 		modalMapBinder(DvrpRoutingModuleProvider.Stage.class, RoutingModule.class).addBinding(
 				DvrpRoutingModuleProvider.Stage.MAIN)
 				.toProvider(new DvrpModeRoutingModule.DefaultMainLegRouterProvider(getMode()));// not singleton
+		DrtRouteCreatorProvider drtRouteCreatorProvider = new DrtRouteCreatorProvider(drtCfg);
 		bindModal(DefaultMainLegRouter.RouteCreator.class).toProvider(
-				new DrtRouteCreatorProvider(drtCfg));// not singleton
+				drtRouteCreatorProvider);// not singleton
+		InsertionCostCalculator.setDrtRouteCreatorProvider(drtRouteCreatorProvider);
 
 		bindModal(DrtStopNetwork.class).toProvider(new DrtStopNetworkProvider(getConfig(), drtCfg)).asEagerSingleton();
 
@@ -160,7 +166,7 @@ public final class DrtModeModule extends AbstractDvrpModeModule {
 				.ifPresent(params -> addEventHandlerBinding().toInstance(new DrtFareHandler(getMode(), params)));
 	}
 
-	private static class DrtRouteCreatorProvider extends ModalProviders.AbstractProvider<DrtRouteCreator> {
+	public static class DrtRouteCreatorProvider extends ModalProviders.AbstractProvider<DrtRouteCreator> {
 		@Inject
 		@Named(DvrpTravelTimeModule.DVRP_ESTIMATED)
 		private TravelTime travelTime;
