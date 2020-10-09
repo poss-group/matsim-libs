@@ -126,6 +126,7 @@ public class InsertionCostCalculator<D> {
     public double calculate(DrtRequest drtRequest, InsertionWithDetourData<D> insertion) {
         //TODO precompute time slacks for each stop to filter out even more infeasible insertions ???????????
 
+		//TODO You could also test if cost == INFEASIBLE_SOLUTION_COST here to short-circuit the execution.
         double[] toFromPickupToFromDropoff = {0, 0, 0, 0};
         double pickupDetourTimeLoss = calculatePickupDetourTimeLoss(drtRequest, insertion, toFromPickupToFromDropoff);
         double dropoffDetourTimeLoss = calculateDropoffDetourTimeLoss(drtRequest, insertion, toFromPickupToFromDropoff);

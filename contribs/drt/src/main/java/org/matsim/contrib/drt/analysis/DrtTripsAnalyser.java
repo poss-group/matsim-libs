@@ -248,6 +248,7 @@ public class DrtTripsAnalyser {
 
 		try {
 			bw.write("timebin;trips;average_wait;min;p_5;p_25;median;p_75;p_95;max");
+			double totalWaitingTime = 0;
 			for (Entry<Double, List<DrtTrip>> e : splitTrips.entrySet()) {
 				long rides = 0;
 				double averageWait = 0;
@@ -263,6 +264,7 @@ public class DrtTripsAnalyser {
 					for (DrtTrip t : e.getValue()) {
 						stats.addValue(t.waitTime);
 					}
+					totalWaitingTime += stats.getSum();
 					rides = stats.getN();
 					averageWait = stats.getMean();
 					min = stats.getMin();
@@ -294,6 +296,8 @@ public class DrtTripsAnalyser {
 						format.format(max) + ""));
 
 			}
+			bw.newLine();
+			bw.write("Total waiting time;" + String.valueOf(totalWaitingTime));
 			bw.flush();
 			bw.close();
 			if (createGraphs) {
