@@ -297,10 +297,10 @@ public class InsertionCostCalculator<D> {
         // Comparing direct and indirect traveltime for current request
 //        LOG.warn("detourTravelTime: " + detourTravelTime +"\ndirectTravelTime: " + directTravelTime); // TODO:
 //         direct times shorter than indirect ones??
-//        if (detourTravelTime > RELATIVE_DELIVERY_DELTA*directTravelTime) {
+        if (detourTravelTime > RELATIVE_DELIVERY_DELTA*directTravelTime) {
 //            LOG.warn("relative_delivery_delay_constraint violated");
-//            return true;
-//        }
+            return true;
+        }
 
         // vehicle's time window cannot be violated
         DrtStayTask lastTask = (DrtStayTask) Schedules.getLastTask(vEntry.vehicle.getSchedule());
