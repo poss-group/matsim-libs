@@ -85,8 +85,8 @@ public class InsertionCostCalculator<D> {
     private final ToDoubleFunction<D> detourTime;
 
     private final static Logger LOG = Logger.getLogger(InsertionCostCalculator.class.getName());
-    private final static double DETOUR_DELTA = 999;//1.5;
-    private final static double RELATIVE_DELIVERY_DELTA = 3;
+    private final static double DETOUR_DELTA = 1.5;
+//    private final static double RELATIVE_DELIVERY_DELTA = 3;
     private static DrtRouteCreatorProvider drtRouteCreatorProvider;
 
     public InsertionCostCalculator(DrtConfigGroup drtConfig, MobsimTimer timer, PenaltyCalculator penaltyCalculator,
@@ -245,13 +245,13 @@ public class InsertionCostCalculator<D> {
         // calculating the travel time for the current passenger
 //        double detourTravelTime = toFromPickupToFromDropoff[1] + toFromPickupToFromDropoff[2];
 //        double lastStopDepartureTime = pickupIdx != dropoffIdx ? vEntry.stops.get(pickupIdx).getDepartureTime() : 0;
-        List<Link> stopList = new ArrayList<>();
-        stopList.add(drtRequest.getFromLink());
+//        List<Link> stopList = new ArrayList<>();
+//        stopList.add(drtRequest.getFromLink());
 
         // this is what we cannot violate
         for (int s = pickupIdx; s < dropoffIdx; s++) {
             Stop stop = vEntry.stops.get(s);
-            stopList.add(stop.getLink());
+//            stopList.add(stop.getLink());
             // all stops after pickup but still before dropoff are delayed by pickupDetourTimeLoss
             if (stop.task.getBeginTime() + pickupDetourTimeLoss > stop.latestArrivalTime //
                     // (stop.latestArrivalTime is the latest arrival time according to alpha*t_direct + beta
@@ -264,7 +264,7 @@ public class InsertionCostCalculator<D> {
                 return true;
             }
         }
-        stopList.add(drtRequest.getToLink());
+//        stopList.add(drtRequest.getToLink());
 
         // ... now the same for everything after the considered dropoff:
 
@@ -279,28 +279,28 @@ public class InsertionCostCalculator<D> {
         }
 
         // calculating the direct TravelTime
-        RouteFactories routeFactories = new RouteFactories();
-        routeFactories.setRouteFactory(DrtRoute.class, new DrtRouteFactory());
-        DrtRoute directRoute = (DrtRoute) drtRouteCreatorProvider.get().createRoute(drtRequest.getSubmissionTime(),
-                drtRequest.getFromLink(),
-                drtRequest.getToLink(),
-                routeFactories);
-        double directTravelTime = directRoute.getDirectRideTime();
-        double detourTravelTime = IntStream.range(0, stopList.size() - 1)
-                .mapToObj(i -> (DrtRoute) drtRouteCreatorProvider.get().createRoute(drtRequest.getSubmissionTime(),
-                        stopList.get(i),
-                        stopList.get(i + 1),
-                        routeFactories)).mapToDouble(DrtRoute::getDirectRideTime).sum();
-        assert detourTravelTime > directTravelTime : "Travel Time of detour route must be higher than travel time of " +
-                "direct route!";
+//        RouteFactories routeFactories = new RouteFactories();
+//        routeFactories.setRouteFactory(DrtRoute.class, new DrtRouteFactory());
+//        DrtRoute directRoute = (DrtRoute) drtRouteCreatorProvider.get().createRoute(drtRequest.getSubmissionTime(),
+//                drtRequest.getFromLink(),
+//                drtRequest.getToLink(),
+//                routeFactories);
+//        double directTravelTime = directRoute.getDirectRideTime();
+//        double detourTravelTime = IntStream.range(0, stopList.size() - 1)
+//                .mapToObj(i -> (DrtRoute) drtRouteCreatorProvider.get().createRoute(drtRequest.getSubmissionTime(),
+//                        stopList.get(i),
+//                        stopList.get(i + 1),
+//                        routeFactories)).mapToDouble(DrtRoute::getDirectRideTime).sum();
+//        assert detourTravelTime > directTravelTime : "Travel Time of detour route must be higher than travel time of " +
+//                "direct route!";
 
         // Comparing direct and indirect traveltime for current request
 //        LOG.warn("detourTravelTime: " + detourTravelTime +"\ndirectTravelTime: " + directTravelTime); // TODO:
 //         direct times shorter than indirect ones??
-        if (detourTravelTime > RELATIVE_DELIVERY_DELTA*directTravelTime) {
-//            LOG.warn("relative_delivery_delay_constraint violated");
-            return true;
-        }
+//        if (detourTravelTime > RELATIVE_DELIVERY_DELTA*directTravelTime) {
+////            LOG.warn("relative_delivery_delay_constraint violated");
+//            return true;
+//        }
 
         // vehicle's time window cannot be violated
         DrtStayTask lastTask = (DrtStayTask) Schedules.getLastTask(vEntry.vehicle.getSchedule());
