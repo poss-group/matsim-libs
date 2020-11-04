@@ -247,13 +247,13 @@ public class InsertionCostCalculator<D> {
         // calculating the travel time for the current passenger
 //        double detourTravelTime = toFromPickupToFromDropoff[1] + toFromPickupToFromDropoff[2];
 //        double lastStopDepartureTime = pickupIdx != dropoffIdx ? vEntry.stops.get(pickupIdx).getDepartureTime() : 0;
-        List<Link> stopList = new ArrayList<>();
-        stopList.add(drtRequest.getFromLink());
+//        List<Link> stopList = new ArrayList<>();
+//        stopList.add(drtRequest.getFromLink());
 
         // this is what we cannot violate
         for (int s = pickupIdx; s < dropoffIdx; s++) {
             Stop stop = vEntry.stops.get(s);
-            stopList.add(stop.getLink());
+//            stopList.add(stop.getLink());
             // all stops after pickup but still before dropoff are delayed by pickupDetourTimeLoss
             if (stop.task.getBeginTime() + pickupDetourTimeLoss > stop.latestArrivalTime //
                     // (stop.latestArrivalTime is the latest arrival time according to alpha*t_direct + beta
@@ -266,7 +266,7 @@ public class InsertionCostCalculator<D> {
                 return true;
             }
         }
-        stopList.add(drtRequest.getToLink());
+//        stopList.add(drtRequest.getToLink());
 
         // ... now the same for everything after the considered dropoff:
 
