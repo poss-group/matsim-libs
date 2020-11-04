@@ -3,7 +3,7 @@
  * project: org.matsim.*
  * *********************************************************************** *
  *                                                                         *
- * copyright       : (C) 2019 by the members listed in the COPYING,        *
+ * copyright       : (C) 2020 by the members listed in the COPYING,        *
  *                   LICENSE and WARRANTY file.                            *
  * email           : info at matsim dot org                                *
  *                                                                         *
@@ -18,35 +18,41 @@
  * *********************************************************************** *
  */
 
-package org.matsim.contrib.edrt.run;
+package org.matsim.contrib.zone.skims;
 
-import org.matsim.contrib.drt.analysis.DrtModeAnalysisModule;
-import org.matsim.contrib.drt.routing.MultiModeDrtMainModeIdentifier;
-import org.matsim.contrib.drt.run.DrtConfigGroup;
-import org.matsim.contrib.drt.run.DrtModeModule;
-import org.matsim.contrib.drt.run.DrtModeQSimModule;
-import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
+import javax.inject.Provider;
+
+import org.matsim.api.core.v01.network.Network;
+import org.matsim.contrib.dvrp.router.DvrpGlobalRoutingNetworkProvider;
+import org.matsim.core.config.groups.GlobalConfigGroup;
 import org.matsim.core.controler.AbstractModule;
-import org.matsim.core.router.MainModeIdentifier;
 
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 /**
  * @author Michal Maciejewski (michalm)
  */
-public class MultiModeEDrtModule extends AbstractModule {
+public class DvrpTravelTimesMatrixModule extends AbstractModule {
+	private final DvrpTravelTimeMatrixParams params;
+	private final int numberOfThreads;
 
-	@Inject
-	private MultiModeDrtConfigGroup multiModeDrtCfg;
+	public DvrpTravelTimesMatrixModule(GlobalConfigGroup globalConfig, DvrpTravelTimeMatrixParams params) {
+		this.params = params;
+		this.numberOfThreads = globalConfig.getNumberOfThreads();
+	}
 
 	@Override
 	public void install() {
-		for (DrtConfigGroup drtCfg : multiModeDrtCfg.getModalElements()) {
-			install(new DrtModeModule(drtCfg));
-			installQSimModule(new DrtModeQSimModule(drtCfg, new EDrtModeOptimizerQSimModule(drtCfg)));
-			install(new DrtModeAnalysisModule(drtCfg));
-		}
+		bind(DvrpTravelTimeMatrix.class).toProvider(new Provider<>() {
+			@Inject
+			@Named(DvrpGlobalRoutingNetworkProvider.DVRP_ROUTING)
+			private Network network;
 
-		bind(MainModeIdentifier.class).toInstance(new MultiModeDrtMainModeIdentifier(multiModeDrtCfg));
+			@Override
+			public DvrpTravelTimeMatrix get() {
+				return new DvrpTravelTimeMatrix(network, params, numberOfThreads);
+			}
+		}).asEagerSingleton();
 	}
 }
