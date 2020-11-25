@@ -28,6 +28,7 @@ import java.util.function.ToDoubleFunction;
 import java.util.stream.IntStream;
 
 import org.apache.log4j.Logger;
+import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Route;
@@ -360,16 +361,21 @@ public class InsertionCostCalculator<D> {
     }
 
     private boolean isEllipseConstraintViolated(Link previousLink, Link insertedLink, Link nextLink) {
-        double directDistance = DistanceUtils.calculateDistance(previousLink.getCoord(), nextLink.getCoord());
-        double detourDistance = DistanceUtils.calculateDistance(previousLink.getCoord(), insertedLink.getCoord())
-                + DistanceUtils.calculateDistance(insertedLink.getCoord(), nextLink.getCoord());
-        boolean result = directDistance > 0 &&
-                detourDistance > 0 &&
-                detourDistance > DETOUR_DELTA * directDistance;
+//        double directDistance = DistanceUtils.calculateDistance(previousLink.getCoord(), nextLink.getCoord());
+        double directDistance = calculateManhattanDistance(previousLink.getCoord(), nextLink.getCoord());
+//        double detourDistance = DistanceUtils.calculateDistance(previousLink.getCoord(), insertedLink.getCoord())
+//                + DistanceUtils.calculateDistance(insertedLink.getCoord(), nextLink.getCoord());
+		double detourDistance = calculateManhattanDistance(previousLink.getCoord(), insertedLink.getCoord())
+				+ calculateManhattanDistance(insertedLink.getCoord(), nextLink.getCoord());
+		boolean result = detourDistance > DETOUR_DELTA * directDistance;
         assert (detourDistance > 0 && directDistance > 0 && directDistance > detourDistance) :
                 "detour distance smaller than direct distance";
 
         return result;
     }
+
+    private double calculateManhattanDistance(Coord x, Coord y) {
+    	return Math.abs(x.getX() - y.getX()) + Math.abs(x.getY() - y.getY());
+	}
 }
 
