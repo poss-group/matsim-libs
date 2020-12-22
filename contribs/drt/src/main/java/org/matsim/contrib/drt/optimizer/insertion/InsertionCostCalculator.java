@@ -21,27 +21,18 @@ package org.matsim.contrib.drt.optimizer.insertion;
 
 import static org.matsim.contrib.drt.schedule.DrtTaskBaseType.STOP;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.DoubleSupplier;
 import java.util.function.ToDoubleFunction;
-import java.util.stream.IntStream;
 
-import com.google.inject.Inject;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Coord;
-import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
-import org.matsim.api.core.v01.population.Leg;
-import org.matsim.api.core.v01.population.Route;
 import org.matsim.contrib.drt.optimizer.VehicleData;
 import org.matsim.contrib.drt.optimizer.VehicleData.Stop;
 import org.matsim.contrib.drt.passenger.DrtRequest;
 import org.matsim.contrib.drt.passenger.DrtRequestCreator;
 import org.matsim.contrib.drt.routing.DefaultDrtRouteUpdater;
-import org.matsim.contrib.drt.routing.DrtRoute;
 import org.matsim.contrib.drt.routing.DrtRouteCreator;
-import org.matsim.contrib.drt.routing.DrtRouteFactory;
 import org.matsim.contrib.drt.run.DrtConfigGroup;
 import org.matsim.contrib.drt.schedule.DrtStayTask;
 import org.matsim.contrib.drt.run.DrtModeModule.DrtRouteCreatorProvider;
@@ -49,9 +40,6 @@ import org.matsim.contrib.dvrp.schedule.Schedule;
 import org.matsim.contrib.dvrp.schedule.Schedule.ScheduleStatus;
 import org.matsim.contrib.dvrp.schedule.Schedules;
 import org.matsim.core.mobsim.framework.MobsimTimer;
-import org.matsim.contrib.util.distance.DistanceUtils;
-import org.matsim.core.mobsim.framework.PlanAgent;
-import org.matsim.core.population.routes.RouteFactories;
 
 /**
  * @author michalm
@@ -95,6 +83,7 @@ public class InsertionCostCalculator<D> {
 	//    private final static double RELATIVE_DELIVERY_DELTA = 3;
 	private static DrtRouteCreatorProvider drtRouteCreatorProvider;
 	private static double L = 10000;
+	private static double ERR = 1e-4;
 
 	public InsertionCostCalculator(DrtConfigGroup drtConfig, MobsimTimer timer, PenaltyCalculator penaltyCalculator,
 								   ToDoubleFunction<D> detourTime) {
@@ -365,20 +354,29 @@ public class InsertionCostCalculator<D> {
 	}
 
 	private boolean isEllipseConstraintViolated(Link previousLink, Link insertedLink, Link nextLink) {
-//        double directDistance = DistanceUtils.calculateDistance(previousLink.getCoord(), nextLink.getCoord());
-		double directDistance = calculateManhattanDistance(previousLink.getCoord(), nextLink.getCoord());
-//        double detourDistance = DistanceUtils.calculateDistance(previousLink.getCoord(), insertedLink.getCoord())
-//                + DistanceUtils.calculateDistance(insertedLink.getCoord(), nextLink.getCoord());
-		double detourDistance = calculateManhattanDistance(previousLink.getCoord(), insertedLink.getCoord())
-				+ calculateManhattanDistance(insertedLink.getCoord(), nextLink.getCoord());
+        double directDistance = calculateEuclideanDistancePeriodic(previousLink.getCoord(), nextLink.getCoord());
+//		double directDistance = calculateManhattanDistancePeriodic(previousLink.getCoord(), nextLink.getCoord());
+        double detourDistance = calculateEuclideanDistancePeriodic(previousLink.getCoord(), insertedLink.getCoord())
+                + calculateEuclideanDistancePeriodic(insertedLink.getCoord(), nextLink.getCoord());
+//		double detourDistance = calculateManhattanDistancePeriodic(previousLink.getCoord(), insertedLink.getCoord())
+//				+ calculateManhattanDistancePeriodic(insertedLink.getCoord(), nextLink.getCoord());
 		boolean result = detourDistance > DETOUR_DELTA * directDistance;
-		assert (detourDistance >= 0 && directDistance >= 0 && directDistance <= detourDistance) :
+		assert (detourDistance >= 0 && directDistance >= 0 && directDistance - detourDistance <= ERR ) :
 				"detour distance smaller than direct distance";
 
 		return result;
 	}
 
-	private double calculateManhattanDistance(Coord from, Coord to) {
+	private double calculateEuclideanDistancePeriodic(Coord from, Coord to) {
+		double deltaX = Math.abs(to.getX() - from.getX());
+		double deltaXPeriodic = deltaX < L / 2 ? deltaX : -deltaX + L;
+		double deltaY = Math.abs(to.getY() - from.getY());
+		double deltaYPeriodic = deltaY < L / 2 ? deltaY : -deltaY + L;
+
+		return Math.sqrt(deltaXPeriodic * deltaXPeriodic + deltaYPeriodic * deltaYPeriodic);
+	}
+
+	private double calculateManhattanDistancePeriodic(Coord from, Coord to) {
 		double deltaX = Math.abs(to.getX() - from.getX());
 		double deltaXPeriodic = deltaX < L / 2 ? deltaX : -deltaX + L;
 		double deltaY = Math.abs(to.getY() - from.getY());
