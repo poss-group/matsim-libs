@@ -128,7 +128,7 @@ public final class DrtModeModule extends AbstractDvrpModeModule {
 		DrtRouteCreatorProvider drtRouteCreatorProvider = new DrtRouteCreatorProvider(drtCfg);
 		bindModal(DefaultMainLegRouter.RouteCreator.class).toProvider(
 				drtRouteCreatorProvider);// not singleton
-		InsertionCostCalculator.setDrtRouteCreatorProvider(drtRouteCreatorProvider);
+//		InsertionCostCalculator.setDrtRouteCreatorProvider(drtRouteCreatorProvider);
 
 		bindModal(DrtStopNetwork.class).toProvider(new DrtStopNetworkProvider(getConfig(), drtCfg)).asEagerSingleton();
 
