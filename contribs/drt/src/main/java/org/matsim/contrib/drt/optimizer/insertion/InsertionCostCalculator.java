@@ -128,12 +128,10 @@ public class InsertionCostCalculator<D> {
 		// Test pickup/dropoff ellipse
 		InsertionGenerator.InsertionPoint pickupPoint = insertion.getPickup();
 		InsertionGenerator.InsertionPoint dropoffPoint = insertion.getDropoff();
-		if (isEllipseConstraintViolated(pickupPoint.previousWaypoint.getLink().getCoord(),
-				pickupPoint.newWaypoint.getLink().getCoord(), pickupPoint.nextWaypoint.getLink().getCoord()) ||
-			isEllipseConstraintViolated(dropoffPoint.previousWaypoint.getLink().getCoord(),
-					dropoffPoint.newWaypoint.getLink().getCoord(), dropoffPoint.nextWaypoint.getLink().getCoord())) {
+		if (!checkPickupDropoffEllipse(pickupPoint, dropoffPoint)) {
 			return INFEASIBLE_SOLUTION_COST;
 		}
+
 		double pickupDetourTimeLoss = insertionDetourTimeCalculator.calculatePickupDetourTimeLoss(insertion);
 		double dropoffDetourTimeLoss = insertionDetourTimeCalculator.calculateDropoffDetourTimeLoss(insertion);
 		// the pickupTimeLoss is needed for stops that suffer only that one, while the sum of both will be suffered by
@@ -147,6 +145,30 @@ public class InsertionCostCalculator<D> {
 		}
 
 		return totalTimeLoss + calcSoftConstraintPenalty(drtRequest, insertion, pickupDetourTimeLoss);
+	}
+
+	private boolean checkPickupDropoffEllipse(InsertionGenerator.InsertionPoint pickupPoint,
+										   InsertionGenerator.InsertionPoint dropoffPoint) {
+		//TODO somehow catch if link exists or not
+		try {
+			Coord pickupPreviousCoord = pickupPoint.previousWaypoint.getLink().getCoord();
+			Coord pickupCoord = pickupPoint.newWaypoint.getLink().getCoord();
+			Coord pickupNextCoord = pickupPoint.nextWaypoint.getLink().getCoord();
+			if (isEllipseConstraintViolated(pickupPreviousCoord, pickupCoord, pickupNextCoord)) {
+				return false;
+			}
+		} catch (Exception e) {
+		}
+		try {
+			Coord dropoffPreviousCoord = dropoffPoint.previousWaypoint.getLink().getCoord();
+			Coord dropoffCoord = dropoffPoint.newWaypoint.getLink().getCoord();
+			Coord dropoffNextCoord = dropoffPoint.nextWaypoint.getLink().getCoord();
+			if (isEllipseConstraintViolated(dropoffPreviousCoord, dropoffCoord, dropoffNextCoord)) {
+				return false;
+			}
+		} catch (Exception e) {
+		}
+		return true;
 	}
 
 	private boolean checkHardConstraints(InsertionWithDetourData<?> insertion, double pickupDetourTimeLoss,
@@ -267,13 +289,13 @@ public class InsertionCostCalculator<D> {
 	private static boolean isEllipseConstraintViolated(Coord previousCoord, Coord insertedCoord, Coord nextCoord) {
 		double directDistance = calculateEuclideanDistancePeriodic(previousCoord, nextCoord);
 //		double directDistance = calculateManhattanDistancePeriodic(previousCoord, nextCoord);
-		double detourDistance = calculateEuclideanDistancePeriodic(previousCoord, insertedCoord)
-				+ calculateEuclideanDistancePeriodic(insertedCoord, nextCoord);
+		double detourDistance = calculateEuclideanDistancePeriodic(previousCoord, insertedCoord) +
+				calculateEuclideanDistancePeriodic(insertedCoord, nextCoord);
 //		double detourDistance = calculateManhattanDistancePeriodic(previousCoord, insertedCoord)
 //				+ calculateManhattanDistancePeriodic(insertedCoord, nextCoord);
 		boolean result = detourDistance > DETOUR_DELTA * directDistance;
-		assert (detourDistance >= 0 && directDistance >= 0 && directDistance - detourDistance <= ERR) :
-				"detour distance smaller than direct distance";
+//		assert (detourDistance >= 0 && directDistance >= 0 && directDistance - detourDistance <= ERR) :
+//				"detour distance smaller than direct distance";
 
 		return result;
 	}
