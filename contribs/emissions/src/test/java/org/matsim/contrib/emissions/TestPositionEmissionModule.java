@@ -36,6 +36,7 @@ import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
 
+import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -84,7 +85,6 @@ public class TestPositionEmissionModule {
         config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
         config.controler().setOutputDirectory(testUtils.getOutputDirectory());
 
-
         final PlanCalcScoreConfigGroup.ActivityParams homeParams = new PlanCalcScoreConfigGroup.ActivityParams("home")
                 .setTypicalDuration(20);
         config.planCalcScore().addActivityParams(homeParams);
@@ -132,7 +132,7 @@ public class TestPositionEmissionModule {
                 addEventHandlerBinding().toInstance(handler);
                 addEventHandlerBinding().toInstance(mainLinkWarmHandler);
                 addEventHandlerBinding().toInstance(coldHandler);
-                bind(EventsManager.class).to(EventsManagerImpl.class);
+                bind(EventsManager.class).to(EventsManagerImpl.class).in(Singleton.class);
             }
         });
 
