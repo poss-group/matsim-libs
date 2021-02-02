@@ -436,6 +436,10 @@ public class QuadTree<T> implements Serializable {
 				distanceY = Math.min(Math.abs(this.minY - y), Math.abs(this.maxY - y));
 			}
 
+			double L = 10000;
+			distanceX = distanceX < L / 2 ? distanceX : -distanceX + L;
+			distanceY = distanceY < L / 2 ? distanceY : -distanceY + L;
+
 			return Math.sqrt(distanceX * distanceX + distanceY * distanceY);
 		}
 
@@ -449,6 +453,10 @@ public class QuadTree<T> implements Serializable {
 		public double calcMaxDistance(final double x, final double y) {
 			double distanceX = Math.max(Math.abs(this.minX - x), Math.abs(this.maxX - x));
 			double distanceY = Math.max(Math.abs(this.minY - y), Math.abs(this.maxY - y));
+
+			double L = 10000;
+			distanceX = distanceX < L / 2 ? distanceX : -distanceX + L;
+			distanceY = distanceY < L / 2 ? distanceY : -distanceY + L;
 
 			return Math.sqrt(distanceX * distanceX + distanceY * distanceY);
 		}

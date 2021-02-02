@@ -8,8 +8,8 @@
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>matsim</artifactId>
-	<name>MATSim</name>
+	<artifactId>matsim_pBC</artifactId>
+	<name>MATSim_pBC</name>
 	<description>Multi-Agent Transport Simulation</description>
 
 	<url>http://ci.matsim.org:8080/job/MATSim_M2/ws/matsim/target/site</url>

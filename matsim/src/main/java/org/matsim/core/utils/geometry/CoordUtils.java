@@ -171,14 +171,21 @@ public abstract class CoordUtils {
 		 * robustness, performance and so on ... [gl] */
 		if( !coord.hasZ() && !other.hasZ() ){
 			/* Both are 2D coordinates. */
-			double xDiff = other.getX()-coord.getX();
-			double yDiff = other.getY()-coord.getY();
+            double L = 10000;
+			double xDiff = Math.abs(other.getX()-coord.getX());
+			xDiff = xDiff < L / 2 ? xDiff : -xDiff + L;
+			double yDiff = Math.abs(other.getY()-coord.getY());
+			yDiff = yDiff < L / 2 ? yDiff : -yDiff + L;
 			return Math.sqrt((xDiff*xDiff) + (yDiff*yDiff));
 		} else if( coord.hasZ() && other.hasZ() ){
 			/* Both are 3D coordinates. */
-			double xDiff = other.getX()-coord.getX();
-			double yDiff = other.getY()-coord.getY();
-			double zDiff = other.getZ()-coord.getZ();
+			double L = 10000;
+			double xDiff = Math.abs(other.getX()-coord.getX());
+			xDiff = xDiff < L / 2 ? xDiff : -xDiff + L;
+			double yDiff = Math.abs(other.getY()-coord.getY());
+			yDiff = yDiff < L / 2 ? yDiff : -yDiff + L;
+			double zDiff = Math.abs(other.getZ()-coord.getZ());
+			zDiff = zDiff < L / 2 ? zDiff : -zDiff + L;
 			return Math.sqrt((xDiff*xDiff) + (yDiff*yDiff) + (zDiff*zDiff));
 		} else{
 			LOG.warn("Mixed use of elevation in coordinates: " + coord.toString() + 
