@@ -24,12 +24,15 @@ import java.util.function.ToDoubleFunction;
 
 import javax.annotation.Nullable;
 
+import org.apache.log4j.Logger;
+import org.matsim.api.core.v01.Coord;
 import org.matsim.contrib.drt.optimizer.VehicleEntry;
 import org.matsim.contrib.drt.optimizer.Waypoint;
 import org.matsim.contrib.drt.passenger.DrtRequest;
 import org.matsim.contrib.drt.run.DrtConfigGroup;
 import org.matsim.contrib.drt.schedule.DrtStayTask;
 import org.matsim.contrib.dvrp.schedule.Schedules;
+import org.matsim.contrib.util.distance.DistanceUtils;
 import org.matsim.core.mobsim.framework.MobsimTimer;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -68,9 +71,15 @@ public class InsertionCostCalculator<D> {
 	private final CostCalculationStrategy costCalculationStrategy;
 	private final InsertionDetourTimeCalculator<D> detourTimeCalculator;
 
+	private final static Logger LOG = Logger.getLogger(InsertionCostCalculator.class.getName());
+	private final static double DETOUR_DELTA = 1.5;
+	//    private final static double RELATIVE_DELIVERY_DELTA = 3;
+//	private static DrtModeModule.DrtRouteCreatorProvider drtRouteCreatorProvider;
+	private static double ERR = 1e-4;
+
 	public InsertionCostCalculator(DrtConfigGroup drtConfig, MobsimTimer timer,
-			CostCalculationStrategy costCalculationStrategy, ToDoubleFunction<D> detourTime,
-			@Nullable DetourTimeEstimator replacedDriveTimeEstimator) {
+								   CostCalculationStrategy costCalculationStrategy, ToDoubleFunction<D> detourTime,
+								   @Nullable DetourTimeEstimator replacedDriveTimeEstimator) {
 		this(timer::getTimeOfDay, costCalculationStrategy,
 				new InsertionDetourTimeCalculator<>(drtConfig.getStopDuration(), detourTime,
 						replacedDriveTimeEstimator));
@@ -78,7 +87,7 @@ public class InsertionCostCalculator<D> {
 
 	@VisibleForTesting
 	InsertionCostCalculator(DoubleSupplier timeOfDay, CostCalculationStrategy costCalculationStrategy,
-			InsertionDetourTimeCalculator<D> detourTimeCalculator) {
+							InsertionDetourTimeCalculator<D> detourTimeCalculator) {
 		this.timeOfDay = timeOfDay;
 		this.costCalculationStrategy = costCalculationStrategy;
 		this.detourTimeCalculator = detourTimeCalculator;
@@ -99,6 +108,13 @@ public class InsertionCostCalculator<D> {
 	public double calculate(DrtRequest drtRequest, InsertionWithDetourData<D> insertion) {
 		//TODO precompute time slacks for each stop to filter out even more infeasible insertions ???????????
 
+		// Test pickup/dropoff ellipse
+		InsertionGenerator.InsertionPoint pickupPoint = insertion.getPickup();
+		InsertionGenerator.InsertionPoint dropoffPoint = insertion.getDropoff();
+		if (!checkPickupDropoffEllipse(pickupPoint, dropoffPoint)) {
+			return INFEASIBLE_SOLUTION_COST;
+		}
+
 		var detourTimeInfo = detourTimeCalculator.calculateDetourTimeInfo(insertion);
 
 		if (!checkTimeConstraintsForScheduledRequests(insertion.getInsertion(), detourTimeInfo.pickupTimeLoss,
@@ -111,7 +127,7 @@ public class InsertionCostCalculator<D> {
 	}
 
 	static boolean checkTimeConstraintsForScheduledRequests(InsertionGenerator.Insertion insertion,
-			double pickupDetourTimeLoss, double totalTimeLoss) {
+															double pickupDetourTimeLoss, double totalTimeLoss) {
 		VehicleEntry vEntry = insertion.vehicleEntry;
 		final int pickupIdx = insertion.pickup.index;
 		final int dropoffIdx = insertion.dropoff.index;
@@ -124,7 +140,9 @@ public class InsertionCostCalculator<D> {
 		for (int s = pickupIdx; s < dropoffIdx; s++) {
 			Waypoint.Stop stop = vEntry.stops.get(s);
 			if (stop.task.getBeginTime() + pickupDetourTimeLoss > stop.latestArrivalTime
-					|| stop.task.getEndTime() + pickupDetourTimeLoss > stop.latestDepartureTime) {
+					|| stop.task.getEndTime() + pickupDetourTimeLoss > stop.latestDepartureTime
+					|| isEllipseConstraintViolated(insertion.pickup.newWaypoint.getLink().getCoord(),
+					stop.getLink().getCoord(), insertion.dropoff.newWaypoint.getLink().getCoord())) {
 				return false;
 			}
 		}
@@ -139,11 +157,74 @@ public class InsertionCostCalculator<D> {
 			}
 		}
 
+		// calculating the direct TravelTime
+//        RouteFactories routeFactories = new RouteFactories();
+//        routeFactories.setRouteFactory(DrtRoute.class, new DrtRouteFactory());
+//        DrtRoute directRoute = (DrtRoute) drtRouteCreatorProvider.get().createRoute(drtRequest.getSubmissionTime(),
+//                drtRequest.getFromLink(),
+//                drtRequest.getToLink(),
+//                routeFactories);
+//        double directTravelTime = directRoute.getDirectRideTime();
+//        double detourTravelTime = IntStream.range(0, stopList.size() - 1)
+//                .mapToObj(i -> (DrtRoute) drtRouteCreatorProvider.get().createRoute(drtRequest.getSubmissionTime(),
+//                        stopList.get(i),
+//                        stopList.get(i + 1),
+//                        routeFactories)).mapToDouble(DrtRoute::getDirectRideTime).sum();
+//        assert detourTravelTime > directTravelTime : "Travel Time of detour route must be higher than travel time of " +
+//                "direct route!";
+		//Alternative maybe (DefaultPassengerEngine):
+//		Route route = ((Leg)((PlanAgent)passenger).getCurrentPlanElement()).getRoute();
+
+		// Comparing direct and indirect traveltime for current request
+//        LOG.warn("detourTravelTime: " + detourTravelTime +"\ndirectTravelTime: " + directTravelTime); // TODO:
+//         direct times shorter than indirect ones??
+//        if (detourTravelTime > RELATIVE_DELIVERY_DELTA*directTravelTime) {
+//            LOG.warn("relative_delivery_delay_constraint violated");
+//            return true;
+//        }
+
 		return true; //all time constraints of all stops are satisfied
 	}
 
 	static double calcVehicleSlackTime(VehicleEntry vEntry, double now) {
-		DrtStayTask lastTask = (DrtStayTask)Schedules.getLastTask(vEntry.vehicle.getSchedule());
+		DrtStayTask lastTask = (DrtStayTask) Schedules.getLastTask(vEntry.vehicle.getSchedule());
 		return vEntry.vehicle.getServiceEndTime() - Math.max(lastTask.getBeginTime(), now);
+	}
+
+	private boolean checkPickupDropoffEllipse(InsertionGenerator.InsertionPoint pickupPoint,
+											  InsertionGenerator.InsertionPoint dropoffPoint) {
+		try {
+			Coord pickupPreviousCoord = pickupPoint.previousWaypoint.getLink().getCoord();
+			Coord pickupCoord = pickupPoint.newWaypoint.getLink().getCoord();
+			Coord pickupNextCoord = pickupPoint.nextWaypoint.getLink().getCoord();
+			if (isEllipseConstraintViolated(pickupPreviousCoord, pickupCoord, pickupNextCoord)) {
+				return false;
+			}
+		} catch (Exception e) {
+		}
+		try {
+			Coord dropoffPreviousCoord = dropoffPoint.previousWaypoint.getLink().getCoord();
+			Coord dropoffCoord = dropoffPoint.newWaypoint.getLink().getCoord();
+			Coord dropoffNextCoord = dropoffPoint.nextWaypoint.getLink().getCoord();
+			if (isEllipseConstraintViolated(dropoffPreviousCoord, dropoffCoord, dropoffNextCoord)) {
+				return false;
+			}
+		} catch (Exception e) {
+		}
+		return true;
+	}
+
+	private static boolean isEllipseConstraintViolated(Coord previousCoord, Coord insertedCoord, Coord nextCoord) {
+		double directDistance = DistanceUtils.calculateSquaredDistance(previousCoord, nextCoord);
+//		double directDistance = calculateManhattanDistancePeriodic(previousCoord, nextCoord);
+		double detourDistance = DistanceUtils.calculateSquaredDistance(previousCoord, insertedCoord) +
+				DistanceUtils.calculateSquaredDistance(insertedCoord, nextCoord);
+//		double detourDistance = calculateManhattanDistancePeriodic(previousCoord, insertedCoord)
+//				+ calculateManhattanDistancePeriodic(insertedCoord, nextCoord);
+		boolean result = detourDistance > DETOUR_DELTA * directDistance;
+//		assert (detourDistance >= 0 && directDistance >= 0 && directDistance - detourDistance <= ERR) :
+//				"detour distance smaller than direct distance";
+
+		return result;
 	}
 }
