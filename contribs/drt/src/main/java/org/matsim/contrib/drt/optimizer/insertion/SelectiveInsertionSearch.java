@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
 
-import org.matsim.contrib.drt.optimizer.VehicleData.Entry;
+import org.matsim.contrib.drt.optimizer.VehicleEntry;
 import org.matsim.contrib.drt.optimizer.insertion.InsertionGenerator.Insertion;
 import org.matsim.contrib.drt.passenger.DrtRequest;
 import org.matsim.contrib.drt.run.DrtConfigGroup;
@@ -38,7 +38,7 @@ import org.matsim.core.mobsim.framework.MobsimTimer;
 public class SelectiveInsertionSearch implements DrtInsertionSearch<PathData> {
 
 	// step 1: initial filtering out feasible insertions
-	private final DetourTimesProvider restrictiveDetourTimesProvider;
+	private final DetourTimeEstimator restrictiveDetourTimeEstimator;
 	private final BestInsertionFinder<Double> initialInsertionFinder;
 
 	// step 2: finding best insertion
@@ -47,36 +47,35 @@ public class SelectiveInsertionSearch implements DrtInsertionSearch<PathData> {
 	private final BestInsertionFinder<PathData> bestInsertionFinder;
 
 	public SelectiveInsertionSearch(DetourPathCalculator detourPathCalculator, DrtConfigGroup drtCfg, MobsimTimer timer,
-			ForkJoinPool forkJoinPool, InsertionCostCalculator.PenaltyCalculator penaltyCalculator,
+			ForkJoinPool forkJoinPool, CostCalculationStrategy costCalculationStrategy,
 			DvrpTravelTimeMatrix dvrpTravelTimeMatrix) {
 		this.detourPathCalculator = detourPathCalculator;
 		this.forkJoinPool = forkJoinPool;
 
 		double restrictiveBeelineSpeedFactor = ((SelectiveInsertionSearchParams)drtCfg.getDrtInsertionSearchParams()).getRestrictiveBeelineSpeedFactor();
-		var detourTimeEstimator = DetourTimeEstimator.createFreeSpeedZonalTimeEstimator(restrictiveBeelineSpeedFactor,
-				dvrpTravelTimeMatrix);
-		restrictiveDetourTimesProvider = new DetourTimesProvider(detourTimeEstimator);
+		restrictiveDetourTimeEstimator = DetourTimeEstimator.createFreeSpeedZonalTimeEstimator(
+				restrictiveBeelineSpeedFactor, dvrpTravelTimeMatrix);
 
 		initialInsertionFinder = new BestInsertionFinder<>(
-				new InsertionCostCalculator<>(drtCfg, timer, penaltyCalculator, Double::doubleValue,
-						detourTimeEstimator));
+				new InsertionCostCalculator<>(drtCfg, timer, costCalculationStrategy, Double::doubleValue,
+						restrictiveDetourTimeEstimator));
 
 		bestInsertionFinder = new BestInsertionFinder<>(
-				new InsertionCostCalculator<>(drtCfg, timer, penaltyCalculator, PathData::getTravelTime, null));
+				new InsertionCostCalculator<>(drtCfg, timer, costCalculationStrategy, PathData::getTravelTime, null));
 	}
 
 	@Override
 	public Optional<InsertionWithDetourData<PathData>> findBestInsertion(DrtRequest drtRequest,
-			Collection<Entry> vEntries) {
+			Collection<VehicleEntry> vehicleEntries) {
 		InsertionGenerator insertionGenerator = new InsertionGenerator();
-		DetourData<Double> restrictiveTimeData = restrictiveDetourTimesProvider.getDetourData(drtRequest);
+		DetourData<Double> restrictiveTimeData = DetourData.create(restrictiveDetourTimeEstimator, drtRequest);
 
 		// Parallel outer stream over vehicle entries. The inner stream (flatmap) is sequential.
 		Optional<Insertion> bestInsertion = forkJoinPool.submit(
 				// find best insertion given a stream of insertion with time data
 				() -> initialInsertionFinder.findBestInsertion(drtRequest,
 						//for each vehicle entry
-						vEntries.parallelStream()
+						vehicleEntries.parallelStream()
 								//generate feasible insertions (wrt occupancy limits)
 								.flatMap(e -> insertionGenerator.generateInsertions(drtRequest, e).stream())
 								//map them to insertions with admissible detour times
