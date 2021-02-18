@@ -72,7 +72,7 @@ public class InsertionCostCalculator<D> {
 	private final InsertionDetourTimeCalculator<D> detourTimeCalculator;
 
 	private final static Logger LOG = Logger.getLogger(InsertionCostCalculator.class.getName());
-	private final static double DETOUR_DELTA = 1.5;
+	private final double maxDetour;
 	//    private final static double RELATIVE_DELIVERY_DELTA = 3;
 //	private static DrtModeModule.DrtRouteCreatorProvider drtRouteCreatorProvider;
 	private static double ERR = 1e-4;
@@ -82,15 +82,16 @@ public class InsertionCostCalculator<D> {
 								   @Nullable DetourTimeEstimator replacedDriveTimeEstimator) {
 		this(timer::getTimeOfDay, costCalculationStrategy,
 				new InsertionDetourTimeCalculator<>(drtConfig.getStopDuration(), detourTime,
-						replacedDriveTimeEstimator));
+						replacedDriveTimeEstimator), drtConfig.getMaxDetour());
 	}
 
 	@VisibleForTesting
 	InsertionCostCalculator(DoubleSupplier timeOfDay, CostCalculationStrategy costCalculationStrategy,
-							InsertionDetourTimeCalculator<D> detourTimeCalculator) {
+							InsertionDetourTimeCalculator<D> detourTimeCalculator, double maxDetour) {
 		this.timeOfDay = timeOfDay;
 		this.costCalculationStrategy = costCalculationStrategy;
 		this.detourTimeCalculator = detourTimeCalculator;
+		this.maxDetour = maxDetour;
 	}
 
 	/**
@@ -111,14 +112,14 @@ public class InsertionCostCalculator<D> {
 		// Test pickup/dropoff ellipse
 		InsertionGenerator.InsertionPoint pickupPoint = insertion.getPickup();
 		InsertionGenerator.InsertionPoint dropoffPoint = insertion.getDropoff();
-		if (!checkPickupDropoffEllipse(pickupPoint, dropoffPoint)) {
+		if (!checkPickupDropoffEllipse(pickupPoint, dropoffPoint, maxDetour)) {
 			return INFEASIBLE_SOLUTION_COST;
 		}
 
 		var detourTimeInfo = detourTimeCalculator.calculateDetourTimeInfo(insertion);
 
 		if (!checkTimeConstraintsForScheduledRequests(insertion.getInsertion(), detourTimeInfo.pickupTimeLoss,
-				detourTimeInfo.getTotalTimeLoss())) {
+				detourTimeInfo.getTotalTimeLoss(), maxDetour)) {
 			return INFEASIBLE_SOLUTION_COST;
 		}
 
@@ -127,7 +128,8 @@ public class InsertionCostCalculator<D> {
 	}
 
 	static boolean checkTimeConstraintsForScheduledRequests(InsertionGenerator.Insertion insertion,
-															double pickupDetourTimeLoss, double totalTimeLoss) {
+															double pickupDetourTimeLoss, double totalTimeLoss,
+															double maxDetour) {
 		VehicleEntry vEntry = insertion.vehicleEntry;
 		final int pickupIdx = insertion.pickup.index;
 		final int dropoffIdx = insertion.dropoff.index;
@@ -140,9 +142,12 @@ public class InsertionCostCalculator<D> {
 		for (int s = pickupIdx; s < dropoffIdx; s++) {
 			Waypoint.Stop stop = vEntry.stops.get(s);
 			if (stop.task.getBeginTime() + pickupDetourTimeLoss > stop.latestArrivalTime
-					|| stop.task.getEndTime() + pickupDetourTimeLoss > stop.latestDepartureTime
-					|| isEllipseConstraintViolated(insertion.pickup.newWaypoint.getLink().getCoord(),
-					stop.getLink().getCoord(), insertion.dropoff.newWaypoint.getLink().getCoord())) {
+					|| stop.task.getEndTime() + pickupDetourTimeLoss > stop.latestDepartureTime) {
+				return false;
+			}
+			// TODO this improves servability???
+			if (isEllipseConstraintViolated(insertion.pickup.newWaypoint.getLink().getCoord(),
+					stop.getLink().getCoord(), insertion.dropoff.newWaypoint.getLink().getCoord(), maxDetour)) {
 				return false;
 			}
 		}
@@ -192,12 +197,12 @@ public class InsertionCostCalculator<D> {
 	}
 
 	private boolean checkPickupDropoffEllipse(InsertionGenerator.InsertionPoint pickupPoint,
-											  InsertionGenerator.InsertionPoint dropoffPoint) {
+											  InsertionGenerator.InsertionPoint dropoffPoint, double maxDetour) {
 		try {
 			Coord pickupPreviousCoord = pickupPoint.previousWaypoint.getLink().getCoord();
 			Coord pickupCoord = pickupPoint.newWaypoint.getLink().getCoord();
 			Coord pickupNextCoord = pickupPoint.nextWaypoint.getLink().getCoord();
-			if (isEllipseConstraintViolated(pickupPreviousCoord, pickupCoord, pickupNextCoord)) {
+			if (isEllipseConstraintViolated(pickupPreviousCoord, pickupCoord, pickupNextCoord, maxDetour)) {
 				return false;
 			}
 		} catch (Exception e) {
@@ -206,7 +211,7 @@ public class InsertionCostCalculator<D> {
 			Coord dropoffPreviousCoord = dropoffPoint.previousWaypoint.getLink().getCoord();
 			Coord dropoffCoord = dropoffPoint.newWaypoint.getLink().getCoord();
 			Coord dropoffNextCoord = dropoffPoint.nextWaypoint.getLink().getCoord();
-			if (isEllipseConstraintViolated(dropoffPreviousCoord, dropoffCoord, dropoffNextCoord)) {
+			if (isEllipseConstraintViolated(dropoffPreviousCoord, dropoffCoord, dropoffNextCoord, maxDetour)) {
 				return false;
 			}
 		} catch (Exception e) {
@@ -214,17 +219,17 @@ public class InsertionCostCalculator<D> {
 		return true;
 	}
 
-	private static boolean isEllipseConstraintViolated(Coord previousCoord, Coord insertedCoord, Coord nextCoord) {
-		double directDistance = DistanceUtils.calculateSquaredDistance(previousCoord, nextCoord);
+	private static boolean isEllipseConstraintViolated(Coord previousCoord, Coord insertedCoord, Coord nextCoord,
+													   double maxDetour) {
+		double directDistance = DistanceUtils.calculateDistance(previousCoord, nextCoord);
 //		double directDistance = calculateManhattanDistancePeriodic(previousCoord, nextCoord);
-		double detourDistance = DistanceUtils.calculateSquaredDistance(previousCoord, insertedCoord) +
-				DistanceUtils.calculateSquaredDistance(insertedCoord, nextCoord);
+		double detourDistance = DistanceUtils.calculateDistance(previousCoord, insertedCoord) +
+				DistanceUtils.calculateDistance(insertedCoord, nextCoord);
 //		double detourDistance = calculateManhattanDistancePeriodic(previousCoord, insertedCoord)
 //				+ calculateManhattanDistancePeriodic(insertedCoord, nextCoord);
-		boolean result = detourDistance > DETOUR_DELTA * directDistance;
-//		assert (detourDistance >= 0 && directDistance >= 0 && directDistance - detourDistance <= ERR) :
-//				"detour distance smaller than direct distance";
+		assert  (detourDistance >= 0 && directDistance >= 0 && detourDistance - directDistance > -ERR):
+				"detour distance smaller than direct distance";
 
-		return result;
+		return detourDistance > maxDetour * directDistance;
 	}
 }

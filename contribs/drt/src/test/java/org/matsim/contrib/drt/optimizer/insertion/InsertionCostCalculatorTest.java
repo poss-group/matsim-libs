@@ -79,7 +79,7 @@ public class InsertionCostCalculatorTest {
 		@SuppressWarnings("unchecked")
 		var detourTimeCalculator = (InsertionDetourTimeCalculator<D>)mock(InsertionDetourTimeCalculator.class);
 		var insertionCostCalculator = new InsertionCostCalculator<>(() -> now,
-				new CostCalculationStrategy.RejectSoftConstraintViolations(), detourTimeCalculator);
+				new CostCalculationStrategy.RejectSoftConstraintViolations(), detourTimeCalculator, Double.MAX_VALUE);
 		when(detourTimeCalculator.calculateDetourTimeInfo(insertion)).thenReturn(detourTimeInfo);
 		assertThat(insertionCostCalculator.calculate(drtRequest, insertion)).isEqualTo(expectedCost);
 	}
@@ -90,13 +90,13 @@ public class InsertionCostCalculatorTest {
 		var insertion = insertion(entry, 0, 1);
 
 		//almost too late
-		assertThat(checkTimeConstraintsForScheduledRequests(insertion, 20, 30)).isTrue();
+		assertThat(checkTimeConstraintsForScheduledRequests(insertion, 20, 30,Double.MAX_VALUE)).isTrue();
 
 		//pickup too late
-		assertThat(checkTimeConstraintsForScheduledRequests(insertion, 21, 30)).isFalse();
+		assertThat(checkTimeConstraintsForScheduledRequests(insertion, 21, 30, Double.MAX_VALUE)).isFalse();
 
 		//dropoff too late
-		assertThat(checkTimeConstraintsForScheduledRequests(insertion, 20, 31)).isFalse();
+		assertThat(checkTimeConstraintsForScheduledRequests(insertion, 20, 31, Double.MAX_VALUE)).isFalse();
 	}
 
 	@Test
@@ -105,13 +105,13 @@ public class InsertionCostCalculatorTest {
 		var insertion = insertion(entry, 0, 0);
 
 		//almost too late
-		assertThat(checkTimeConstraintsForScheduledRequests(insertion, 19, 20)).isTrue();
+		assertThat(checkTimeConstraintsForScheduledRequests(insertion, 19, 20, Double.MAX_VALUE)).isTrue();
 
 		//pickup & dropoff too late
-		assertThat(checkTimeConstraintsForScheduledRequests(insertion, 21, 22)).isFalse();
+		assertThat(checkTimeConstraintsForScheduledRequests(insertion, 21, 22, Double.MAX_VALUE)).isFalse();
 
 		//dropoff too late
-		assertThat(checkTimeConstraintsForScheduledRequests(insertion, 20, 21)).isFalse();
+		assertThat(checkTimeConstraintsForScheduledRequests(insertion, 20, 21, Double.MAX_VALUE)).isFalse();
 	}
 
 	@Test
@@ -120,7 +120,7 @@ public class InsertionCostCalculatorTest {
 		var insertion = insertion(entry, 2, 2);
 
 		//appended at the end -> never too late
-		assertThat(checkTimeConstraintsForScheduledRequests(insertion, 9999, 9999)).isTrue();
+		assertThat(checkTimeConstraintsForScheduledRequests(insertion, 9999, 9999, Double.MAX_VALUE)).isTrue();
 	}
 
 	@Test

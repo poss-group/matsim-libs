@@ -142,6 +142,9 @@ public final class DrtConfigGroup extends ReflectiveConfigGroupWithConfigurableP
 					+ " Scales well up to 4, due to path data provision, the most computationally intensive part,"
 					+ " using up to 4 threads. Default value is 'min(4, no. of cores available to JVM)'";
 
+	public static final String MAX_DETOUR = "maxDetour";
+	static final String MAX_DETOUR_EXP = "Maximum accepted detour for pickup, dropoff and request ellipse; defaults to 1.5";
+
 	@NotBlank
 	private String mode = TransportMode.drt; // travel mode (passengers'/customers' perspective)
 
@@ -212,6 +215,8 @@ public final class DrtConfigGroup extends ReflectiveConfigGroupWithConfigurableP
 
 	@Nullable
 	private DrtRequestInsertionRetryParams drtRequestInsertionRetryParams;
+
+	private double maxDetour = 1.5;
 
 	public DrtConfigGroup() {
 		super(GROUP_NAME);
@@ -288,6 +293,8 @@ public final class DrtConfigGroup extends ReflectiveConfigGroupWithConfigurableP
 		Verify.verify(getNumberOfThreads() <= Runtime.getRuntime().availableProcessors(),
 				NUMBER_OF_THREADS + " is higher than the number of logical cores available to JVM");
 
+		Verify.verify(maxDetour > 1, "maximum accepted Detour must be > 1");
+
 		if (config.global().getNumberOfThreads() < getNumberOfThreads()) {
 			log.warn("Consider increasing global.numberOfThreads to at least the value of drt.numberOfThreads"
 					+ " in order to speed up the DRT route update during the replanning phase.");
@@ -321,6 +328,7 @@ public final class DrtConfigGroup extends ReflectiveConfigGroupWithConfigurableP
 		map.put(REJECT_REQUEST_IF_MAX_WAIT_OR_TRAVEL_TIME_VIOLATED,
 				REJECT_REQUEST_IF_MAX_WAIT_OR_TRAVEL_TIME_VIOLATED_EXP);
 		map.put(DRT_SERVICE_AREA_SHAPE_FILE, DRT_SERVICE_AREA_SHAPE_FILE_EXP);
+		map.put(MAX_DETOUR, MAX_DETOUR_EXP);
 		return map;
 	}
 
@@ -613,6 +621,23 @@ public final class DrtConfigGroup extends ReflectiveConfigGroupWithConfigurableP
 	@StringSetter(NUMBER_OF_THREADS)
 	public DrtConfigGroup setNumberOfThreads(final int numberOfThreads) {
 		this.numberOfThreads = numberOfThreads;
+		return this;
+	}
+
+	/**
+	 * @return -- {@value #MAX_DETOUR}
+	 */
+	@StringGetter(MAX_DETOUR)
+	public double getMaxDetour() {
+		return maxDetour;
+	}
+
+	/**
+	 * @param -- {@value #MAX_DETOUR}
+	 */
+	@StringSetter(MAX_DETOUR)
+	public DrtConfigGroup setMaxDetour(double maxDetour) {
+		this.maxDetour = maxDetour;
 		return this;
 	}
 

@@ -22,7 +22,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
-			<artifactId>dvrp</artifactId>
+			<artifactId>dvrp_periodicBC</artifactId>
 			<version>13.0-SNAPSHOT</version>
 		</dependency>
 
