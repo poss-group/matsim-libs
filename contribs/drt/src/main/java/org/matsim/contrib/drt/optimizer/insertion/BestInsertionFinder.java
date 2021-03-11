@@ -22,7 +22,10 @@ package org.matsim.contrib.drt.optimizer.insertion;
 import static org.matsim.contrib.drt.optimizer.insertion.InsertionCostCalculator.INFEASIBLE_SOLUTION_COST;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
+import java.util.Random;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.matsim.api.core.v01.Id;
@@ -34,6 +37,8 @@ import org.matsim.contrib.dvrp.fleet.DvrpVehicle;
  * @author michalm
  */
 public class BestInsertionFinder<D> {
+	private final Random random = new Random();
+
 	static class InsertionWithCost<D> {
 		final InsertionWithDetourData<D> insertionWithDetourData;
 		final double cost;
@@ -63,10 +68,18 @@ public class BestInsertionFinder<D> {
 
 	public Optional<InsertionWithDetourData<D>> findBestInsertion(DrtRequest drtRequest,
 			Stream<InsertionWithDetourData<D>> insertions) {
-		return insertions.map(
+		List<InsertionWithCost<D>> collect = insertions.map(
 				insertion -> new InsertionWithCost<>(insertion, costCalculator.calculate(drtRequest, insertion)))
-				.filter(iWithCost -> iWithCost.cost < INFEASIBLE_SOLUTION_COST)
-				.min(comparator)
-				.map(insertionWithCost -> insertionWithCost.insertionWithDetourData);
+				.filter(iWithCost -> iWithCost.cost < INFEASIBLE_SOLUTION_COST).collect(Collectors.toList());
+		if (!collect.isEmpty()) {
+			return Optional.of(collect.get(random.nextInt(collect.size())).insertionWithDetourData);
+		} else {
+			return Optional.empty();
+		}
+//		return insertions.map(
+//				insertion -> new InsertionWithCost<>(insertion, costCalculator.calculate(drtRequest, insertion)))
+//				.filter(iWithCost -> iWithCost.cost < INFEASIBLE_SOLUTION_COST)
+//				.min(comparator)
+//				.map(insertionWithCost -> insertionWithCost.insertionWithDetourData);
 	}
 }
