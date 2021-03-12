@@ -162,32 +162,6 @@ public class InsertionCostCalculator<D> {
 			}
 		}
 
-		// calculating the direct TravelTime
-//        RouteFactories routeFactories = new RouteFactories();
-//        routeFactories.setRouteFactory(DrtRoute.class, new DrtRouteFactory());
-//        DrtRoute directRoute = (DrtRoute) drtRouteCreatorProvider.get().createRoute(drtRequest.getSubmissionTime(),
-//                drtRequest.getFromLink(),
-//                drtRequest.getToLink(),
-//                routeFactories);
-//        double directTravelTime = directRoute.getDirectRideTime();
-//        double detourTravelTime = IntStream.range(0, stopList.size() - 1)
-//                .mapToObj(i -> (DrtRoute) drtRouteCreatorProvider.get().createRoute(drtRequest.getSubmissionTime(),
-//                        stopList.get(i),
-//                        stopList.get(i + 1),
-//                        routeFactories)).mapToDouble(DrtRoute::getDirectRideTime).sum();
-//        assert detourTravelTime > directTravelTime : "Travel Time of detour route must be higher than travel time of " +
-//                "direct route!";
-		//Alternative maybe (DefaultPassengerEngine):
-//		Route route = ((Leg)((PlanAgent)passenger).getCurrentPlanElement()).getRoute();
-
-		// Comparing direct and indirect traveltime for current request
-//        LOG.warn("detourTravelTime: " + detourTravelTime +"\ndirectTravelTime: " + directTravelTime); // TODO:
-//         direct times shorter than indirect ones??
-//        if (detourTravelTime > RELATIVE_DELIVERY_DELTA*directTravelTime) {
-//            LOG.warn("relative_delivery_delay_constraint violated");
-//            return true;
-//        }
-
 		return true; //all time constraints of all stops are satisfied
 	}
 
