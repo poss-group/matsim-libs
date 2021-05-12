@@ -4,12 +4,12 @@
 	<parent>
 		<groupId>org.matsim</groupId>
 		<artifactId>matsim-all</artifactId>
-		<version>13.1-SNAPSHOT</version>
+		<version>13.1-MyVersion</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>matsim_periodicBC</artifactId>
-	<name>MATSim_periodicBC</name>
+	<artifactId>matsim</artifactId>
+	<name>MATSim</name>
 	<description>Multi-Agent Transport Simulation</description>
 
 	<url>http://ci.matsim.org:8080/job/MATSim_M2/ws/matsim/target/site</url>
@@ -254,7 +254,7 @@
 		<dependency>
 			<groupId>org.matsim</groupId>
 			<artifactId>matsim-examples</artifactId>
-			<version>13.1-SNAPSHOT</version>
+			<version>13.1-MyVersion</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

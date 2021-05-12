@@ -4,12 +4,12 @@
 	<parent>
 		<groupId>org.matsim</groupId>
 		<artifactId>contrib</artifactId>
-		<version>13.1-SNAPSHOT</version>
+		<version>13.1-MyVersion</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.matsim.contrib</groupId>
-	<artifactId>dvrp_periodicBC</artifactId>
-	<name>dvrp_periodicBC</name>
+	<artifactId>dvrp</artifactId>
+	<name>dvrp</name>
 
 	<build>
 		<plugins>
@@ -31,17 +31,17 @@
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>otfvis</artifactId>
-			<version>13.1-SNAPSHOT</version>
+			<version>13.1-MyVersion</version>
 		</dependency>
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>locationchoice</artifactId>
-			<version>13.1-SNAPSHOT</version>
+			<version>13.1-MyVersion</version>
 		</dependency>
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>sbb-extensions</artifactId>
-			<version>13.1-SNAPSHOT</version>
+			<version>13.1-MyVersion</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>

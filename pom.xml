@@ -5,14 +5,14 @@
     <groupId>org.matsim</groupId>
     <artifactId>matsim-all</artifactId>
     <packaging>pom</packaging>
-    <version>13.1-SNAPSHOT</version>
+    <version>13.1-MyVersion</version>
     <name>MATSim-All</name>
     <modules>
         <module>matsim</module>
-        <module>examples</module>
-        <module>benchmark</module>
+<!--        <module>examples</module>-->
+<!--        <module>benchmark</module>-->
         <module>contribs</module>
-        <module>distribution</module>
+<!--        <module>distribution</module>-->
     </modules>
 
     <licenses>
