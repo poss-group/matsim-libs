@@ -5,11 +5,11 @@
     <groupId>org.matsim</groupId>
     <artifactId>matsim-all</artifactId>
     <packaging>pom</packaging>
-    <version>13.1-MyVersion</version>
+    <version>13.1-MyVersionNoQueueCheck</version>
     <name>MATSim-All</name>
     <modules>
         <module>matsim</module>
-<!--        <module>examples</module>-->
+        <module>examples</module>
 <!--        <module>benchmark</module>-->
         <module>contribs</module>
 <!--        <module>distribution</module>-->

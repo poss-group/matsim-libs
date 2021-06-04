@@ -118,10 +118,10 @@ public class InsertionCostCalculator<D> {
 
 		var detourTimeInfo = detourTimeCalculator.calculateDetourTimeInfo(insertion);
 
-		if (!checkTimeConstraintsForScheduledRequests(insertion.getInsertion(), detourTimeInfo.pickupTimeLoss,
-				detourTimeInfo.getTotalTimeLoss(), maxDetour)) {
-			return INFEASIBLE_SOLUTION_COST;
-		}
+//		if (!checkTimeConstraintsForScheduledRequests(insertion.getInsertion(), detourTimeInfo.pickupTimeLoss,
+//				detourTimeInfo.getTotalTimeLoss(), maxDetour)) {
+//			return INFEASIBLE_SOLUTION_COST;
+//		}
 
 		double vehicleSlackTime = calcVehicleSlackTime(insertion.getVehicleEntry(), timeOfDay.getAsDouble());
 		return costCalculationStrategy.calcCost(drtRequest, insertion.getInsertion(), vehicleSlackTime, detourTimeInfo);
