@@ -114,6 +114,9 @@ public class SupersonicOsmNetworkReader {
             // get the from and to nodes for a sub segment of the current way
             ProcessedOsmNode fromOsmNode = nodes.get(way.getNodeIds().get(i - 1));
             ProcessedOsmNode toOsmNode = nodes.get(way.getNodeIds().get(i));
+            if (fromOsmNode == null || toOsmNode == null) {
+                break;
+            }
 
             // add the distance between those nodes to the overall length of segment
             segmentLength += CoordUtils.calcEuclideanDistance(fromOsmNode.getCoord(), toOsmNode.getCoord());
