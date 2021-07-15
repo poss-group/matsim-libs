@@ -184,8 +184,8 @@ import org.matsim.core.utils.geometry.CoordUtils;
 		for (Node node : nodes) {
 			if ((node.getOutLinks().size() > 1 && node.getInLinks().size() > 1)
 					|| landmark == null) {
-				double x = Math.abs(node.getCoord().getX() - this.center.getX());
-				double y = Math.abs(node.getCoord().getY() - this.center.getY());
+				double x = node.getCoord().getX() - this.center.getX();
+				double y = node.getCoord().getY() - this.center.getY();
 				double angle = Math.atan2(y, x) + Math.PI;
 				double minAngelToBorder = 0;
 				if (angle - angles[0] < angles[1] - angle) {
@@ -193,9 +193,6 @@ import org.matsim.core.utils.geometry.CoordUtils;
 				} else {
 					minAngelToBorder = angles[1] - angle;
 				}
-				double L = 10000;
-				x = x < L / 2 ? x : -x + L;
-				y = y < L / 2 ? y : -y + L;
 				double distApprox = Math.sqrt(x * x + y * y) * (1 + minAngelToBorder / (2 * Math.PI));
 				// Set the node that is farthest away from the center to be the landmark in the current sector
 				if (distApprox > maxDist) {

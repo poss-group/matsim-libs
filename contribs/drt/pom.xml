@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.matsim</groupId>
 		<artifactId>contrib</artifactId>
-		<version>13.1-MyVersion</version>
+		<version>13.1-MyVersionOsm</version>
 	</parent>
 	<!-- To install: cd in root -> mvn install -pl :add_constraints_drt -am -DskipTests -->
 	<modelVersion>4.0.0</modelVersion>
@@ -23,13 +23,13 @@
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>dvrp</artifactId>
-			<version>13.1-MyVersion</version>
+			<version>13.1-MyVersionOsm</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>ev</artifactId>
-			<version>13.1-MyVersion</version>
+			<version>13.1-MyVersionOsm</version>
 		</dependency>
 
 		<dependency>

@@ -143,14 +143,14 @@ public final class DrtConfigGroup extends ReflectiveConfigGroupWithConfigurableP
 					+ " using up to 4 threads. Default value is 'min(4, no. of cores available to JVM)'";
 
 	public static final String MAX_DETOUR = "maxDetour";
-	static final String MAX_DETOUR_EXP = "Maximum accepted detour for pickup, dropoff and request ellipse; defaults to 1.5";
+	static final String MAX_DETOUR_EXP = "Maximum accepted detour for pickup, dropoff and request ellipse; defaults to 1.5; deactivated at the moment";
 
 	@NotBlank
 	private String mode = TransportMode.drt; // travel mode (passengers'/customers' perspective)
 
 	private boolean useModeFilteredSubnetwork = false;
 
-	@Positive
+	@PositiveOrZero
 	private double stopDuration = Double.NaN;// seconds
 
 	@PositiveOrZero
