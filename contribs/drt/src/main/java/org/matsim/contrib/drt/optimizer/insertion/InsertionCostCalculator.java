@@ -110,11 +110,11 @@ public class InsertionCostCalculator<D> {
 		//TODO precompute time slacks for each stop to filter out even more infeasible insertions ???????????
 
 		// Test pickup/dropoff ellipse
-		InsertionGenerator.InsertionPoint pickupPoint = insertion.getPickup();
-		InsertionGenerator.InsertionPoint dropoffPoint = insertion.getDropoff();
-		if (!checkPickupDropoffEllipse(pickupPoint, dropoffPoint, maxDetour)) {
-			return INFEASIBLE_SOLUTION_COST;
-		}
+//		InsertionGenerator.InsertionPoint pickupPoint = insertion.getPickup();
+//		InsertionGenerator.InsertionPoint dropoffPoint = insertion.getDropoff();
+//		if (!checkPickupDropoffEllipse(pickupPoint, dropoffPoint, maxDetour)) {
+//			return INFEASIBLE_SOLUTION_COST;
+//		}
 
 		var detourTimeInfo = detourTimeCalculator.calculateDetourTimeInfo(insertion);
 
@@ -145,11 +145,10 @@ public class InsertionCostCalculator<D> {
 					|| stop.task.getEndTime() + pickupDetourTimeLoss > stop.latestDepartureTime) {
 				return false;
 			}
-			// TODO this improves servability???
-			if (isEllipseConstraintViolated(insertion.pickup.newWaypoint.getLink().getCoord(),
-					stop.getLink().getCoord(), insertion.dropoff.newWaypoint.getLink().getCoord(), maxDetour)) {
-				return false;
-			}
+//			if (isEllipseConstraintViolated(insertion.pickup.newWaypoint.getLink().getCoord(),
+//					stop.getLink().getCoord(), insertion.dropoff.newWaypoint.getLink().getCoord(), maxDetour)) {
+//				return false;
+//			}
 		}
 
 		// all stops after the new (potential) dropoff are delayed by totalTimeLoss
